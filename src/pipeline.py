@@ -157,10 +157,10 @@ class SalesDataPipeline:
             return validation_report
     
     def _generate_basic_analytics(self, raw_df, clean_df, invalid_df):
-        """Generate basic analytics summaries even when pipeline fails"""
+        """Generate basic analytics summaries efficiently"""
         engine = self.db.get_engine()
         
-        # Clear existing summaries for this run
+        # Clear existing summaries for this run in one operation
         with engine.connect() as conn:
             conn.execute(text("DELETE FROM analytics_summary WHERE run_id = :run_id"), 
                         {'run_id': self.run_id})
@@ -168,72 +168,67 @@ class SalesDataPipeline:
         
         summaries = []
         current_date = datetime.now().date()
+        timestamp = datetime.now()
         
-        # Always create an overall summary (even if zero)
-        total_summary = {
+        # Calculate totals once
+        total_revenue = float(clean_df['revenue'].sum()) if not clean_df.empty else 0.0
+        total_orders = len(clean_df) if not clean_df.empty else 0
+        
+        # Overall summary
+        summaries.append({
             'run_id': self.run_id,
-            'total_revenue': float(clean_df['revenue'].sum()) if not clean_df.empty else 0.0,
-            'total_orders': len(clean_df) if not clean_df.empty else 0,
+            'total_revenue': total_revenue,
+            'total_orders': total_orders,
             'region': 'ALL',
             'product': 'ALL',
-            'daily_sales': float(clean_df['revenue'].sum()) if not clean_df.empty else 0.0,
+            'daily_sales': total_revenue,
             'calculation_date': current_date,
-            'created_timestamp': datetime.now()
-        }
-        summaries.append(total_summary)
+            'created_timestamp': timestamp
+        })
         
-        # Generate regional summaries (even if zero)
-        regions = ['North', 'South', 'East', 'West', 'Central']
-        for region in regions:
-            if not clean_df.empty:
-                region_data = clean_df[clean_df['region'] == region]
-                revenue = float(region_data['revenue'].sum()) if not region_data.empty else 0.0
-                orders = len(region_data) if not region_data.empty else 0
-            else:
-                revenue = 0.0
-                orders = 0
+        # Regional summaries - optimized
+        if not clean_df.empty:
+            regional_stats = clean_df.groupby('region').agg({
+                'revenue': 'sum',
+                'order_id': 'count'
+            }).reset_index()
             
-            summary = {
-                'run_id': self.run_id,
-                'total_revenue': revenue,
-                'total_orders': orders,
-                'region': region,
-                'product': 'ALL',
-                'daily_sales': revenue,
-                'calculation_date': current_date,
-                'created_timestamp': datetime.now()
-            }
-            summaries.append(summary)
+            for _, row in regional_stats.iterrows():
+                summaries.append({
+                    'run_id': self.run_id,
+                    'total_revenue': float(row['revenue']),
+                    'total_orders': int(row['order_id']),
+                    'region': row['region'],
+                    'product': 'ALL',
+                    'daily_sales': float(row['revenue']),
+                    'calculation_date': current_date,
+                    'created_timestamp': timestamp
+                })
         
-        # Generate product summaries (even if zero)
-        products = ['Tomato Ketchup 500g', 'Chicken Biryani Ready Meal', 'Paneer 200g', 
-                   'Potato Chips 50g', 'Mango Juice 1L']
-        for product in products:
-            if not clean_df.empty:
-                product_data = clean_df[clean_df['product'].str.contains(product.split()[0], na=False)]
-                revenue = float(product_data['revenue'].sum()) if not product_data.empty else 0.0
-                orders = len(product_data) if not product_data.empty else 0
-            else:
-                revenue = 0.0
-                orders = 0
+        # Product summaries - simplified (top 5 only)
+        if not clean_df.empty:
+            product_stats = clean_df.groupby('product').agg({
+                'revenue': 'sum',
+                'order_id': 'count'
+            }).reset_index().nlargest(5, 'revenue')
             
-            summary = {
-                'run_id': self.run_id,
-                'total_revenue': revenue,
-                'total_orders': orders,
-                'region': 'ALL',
-                'product': product,
-                'daily_sales': revenue,
-                'calculation_date': current_date,
-                'created_timestamp': datetime.now()
-            }
-            summaries.append(summary)
+            for _, row in product_stats.iterrows():
+                summaries.append({
+                    'run_id': self.run_id,
+                    'total_revenue': float(row['revenue']),
+                    'total_orders': int(row['order_id']),
+                    'region': 'ALL',
+                    'product': row['product'],
+                    'daily_sales': float(row['revenue']),
+                    'calculation_date': current_date,
+                    'created_timestamp': timestamp
+                })
         
-        # Save summaries to database
+        # Bulk insert all summaries at once
         if summaries:
             summary_df = pd.DataFrame(summaries)
             summary_df.to_sql('analytics_summary', engine, if_exists='append', index=False)
-            self.audit_logger.logger.info(f"Generated {len(summaries)} basic analytics summaries")
+            self.audit_logger.logger.info(f"Generated {len(summaries)} analytics summaries")
 
 if __name__ == "__main__":
     # Initialize database
