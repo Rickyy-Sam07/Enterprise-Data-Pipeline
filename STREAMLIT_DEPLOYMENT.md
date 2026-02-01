@@ -1,6 +1,31 @@
 # Streamlit Cloud Deployment Instructions
 
-## Database Configuration
+## Database Configuration - Neon DB (Recommended)
+
+## Quick Setup:
+1. Create account at https://neon.tech
+2. Create new project
+3. Copy connection details
+4. Update Streamlit secrets:
+
+```toml
+[database]
+DB_HOST = "your-endpoint.us-east-1.aws.neon.tech"
+DB_PORT = 5432
+DB_NAME = "neondb"
+DB_USER = "neondb_owner"
+DB_PASSWORD = "your_password"
+```
+
+## Why Neon DB?
+- ✅ Better Streamlit Cloud compatibility
+- ✅ No IPv6/network issues
+- ✅ Automatic SSL
+- ✅ Free tier available
+
+---
+
+# Alternative: Supabase Configuration
 
 ### Step 1: Configure Secrets in Streamlit Cloud
 1. Go to your Streamlit Cloud app dashboard
