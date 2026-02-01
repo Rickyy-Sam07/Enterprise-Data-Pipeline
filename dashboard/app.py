@@ -616,6 +616,9 @@ class SalesAnalyticsDashboard:
             
             if sample_data:
                 df_sample = pd.DataFrame(sample_data)
+                # Convert string columns to avoid Arrow compatibility issues
+                for col in df_sample.select_dtypes(include=['object']).columns:
+                    df_sample[col] = df_sample[col].astype(str)
                 st.dataframe(df_sample.head(10), use_container_width=True)
                 
                 # Data statistics
