@@ -26,8 +26,11 @@ class SalesAnalyticsDashboard:
         st.title("Enterprise Sales Analytics Pipeline with Data Controls")
         st.markdown("**Enterprise-Grade Data Pipeline with Validation, Exception Management & Audit Logging**")
         
-        # Sidebar for run selection
+        # Sidebar for pipeline controls and run selection
         self._render_sidebar()
+        
+        # Dataset preview section
+        self._render_dataset_preview()
         
         # Main dashboard tabs
         tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -56,12 +59,30 @@ class SalesAnalyticsDashboard:
     def _render_sidebar(self):
         st.sidebar.header("Pipeline Controls")
         
+        # Pipeline execution controls
+        st.sidebar.subheader("Run Pipeline")
+        
+        col1, col2 = st.sidebar.columns(2)
+        
+        with col1:
+            if st.button("🚀 Generate Data", help="Generate new sample data"):
+                self._run_data_generation()
+        
+        with col2:
+            if st.button("⚡ Run Pipeline", help="Execute full pipeline"):
+                self._run_full_pipeline()
+        
+        st.sidebar.markdown("---")
+        
+        # Run selection
+        st.sidebar.subheader("Select Pipeline Run")
+        
         # Get available runs
         runs = self._get_available_runs()
         
         if runs:
             selected_run = st.sidebar.selectbox(
-                "Select Pipeline Run:",
+                "Available Runs:",
                 options=[r['run_id'] for r in runs],
                 format_func=lambda x: f"{x} ({self._get_run_timestamp(x)})"
             )
@@ -76,9 +97,9 @@ class SalesAnalyticsDashboard:
             if status:
                 latest_status = status[0]
                 if latest_status['event_type'] == 'PIPELINE_END':
-                    st.sidebar.success("Pipeline Completed")
+                    st.sidebar.success("✅ Pipeline Completed")
                 else:
-                    st.sidebar.info("Pipeline Running")
+                    st.sidebar.info("🔄 Pipeline Running")
     
     def _render_sales_analytics(self):
         if not st.session_state.get('selected_run'):
@@ -565,6 +586,145 @@ class SalesAnalyticsDashboard:
                 return [dict(row._mapping) for row in result]
         except:
             return []
+    
+    def _render_dataset_preview(self):
+        """Show sample dataset and pipeline execution controls"""
+        st.header("📈 Dataset Preview & Pipeline Controls")
+        
+        # Show sample data from the most recent run or raw data
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            st.subheader("Sample Sales Data")
+            
+            # Try to get sample from clean_sales first, then raw_sales
+            sample_data = self._get_sample_data()
+            
+            if sample_data:
+                df_sample = pd.DataFrame(sample_data)
+                st.dataframe(df_sample.head(10), use_container_width=True)
+                
+                # Data statistics
+                st.subheader("Dataset Statistics")
+                stats_col1, stats_col2, stats_col3 = st.columns(3)
+                
+                with stats_col1:
+                    st.metric("Total Records", len(df_sample))
+                
+                with stats_col2:
+                    if 'region' in df_sample.columns:
+                        st.metric("Regions", df_sample['region'].nunique())
+                
+                with stats_col3:
+                    if 'product' in df_sample.columns:
+                        st.metric("Products", df_sample['product'].nunique())
+            else:
+                st.info("No data available. Please generate sample data first.")
+        
+        with col2:
+            st.subheader("Quick Actions")
+            
+            # Pipeline execution status
+            if st.session_state.get('pipeline_running'):
+                st.warning("🔄 Pipeline is running...")
+                if st.button("Refresh Status"):
+                    st.session_state['pipeline_running'] = False
+                    st.rerun()
+            else:
+                # Generate new data
+                if st.button("🎲 Generate New Data", use_container_width=True):
+                    with st.spinner("Generating sample data..."):
+                        success = self._run_data_generation()
+                        if success:
+                            st.success("Data generated successfully!")
+                            st.rerun()
+                        else:
+                            st.error("Failed to generate data")
+                
+                st.markdown("---")
+                
+                # Run full pipeline
+                if st.button("⚡ Execute Pipeline", use_container_width=True, type="primary"):
+                    with st.spinner("Running pipeline..."):
+                        success = self._run_full_pipeline()
+                        if success:
+                            st.success("Pipeline completed successfully!")
+                            st.rerun()
+                        else:
+                            st.error("Pipeline execution failed")
+                
+                st.markdown("---")
+                
+                # Quick stats
+                runs = self._get_available_runs()
+                st.metric("Total Runs", len(runs))
+    
+    def _get_sample_data(self):
+        """Get sample data for preview"""
+        try:
+            engine = self.db.get_engine()
+            with engine.connect() as conn:
+                # Try clean_sales first
+                result = conn.execute(text("""
+                    SELECT order_id, order_date, region, product, quantity, revenue
+                    FROM clean_sales 
+                    ORDER BY processed_timestamp DESC 
+                    LIMIT 100
+                """))
+                data = [dict(row._mapping) for row in result]
+                
+                if not data:
+                    # Fallback to raw_sales
+                    result = conn.execute(text("""
+                        SELECT order_id, order_date, region, product, quantity, revenue
+                        FROM raw_sales 
+                        ORDER BY ingestion_timestamp DESC 
+                        LIMIT 100
+                    """))
+                    data = [dict(row._mapping) for row in result]
+                
+                return data
+        except:
+            return []
+    
+    def _run_data_generation(self):
+        """Execute data generation script"""
+        try:
+            import subprocess
+            import sys
+            
+            # Run the data generation script
+            result = subprocess.run([
+                sys.executable, 
+                os.path.join(os.path.dirname(__file__), '..', 'src', 'generate_data.py')
+            ], capture_output=True, text=True, cwd=os.path.dirname(__file__))
+            
+            return result.returncode == 0
+        except Exception as e:
+            st.error(f"Error generating data: {str(e)}")
+            return False
+    
+    def _run_full_pipeline(self):
+        """Execute the full pipeline"""
+        try:
+            import subprocess
+            import sys
+            
+            # Set pipeline running state
+            st.session_state['pipeline_running'] = True
+            
+            # Run the pipeline script
+            result = subprocess.run([
+                sys.executable, 
+                os.path.join(os.path.dirname(__file__), '..', 'src', 'pipeline.py')
+            ], capture_output=True, text=True, cwd=os.path.dirname(__file__))
+            
+            st.session_state['pipeline_running'] = False
+            return result.returncode == 0
+        except Exception as e:
+            st.error(f"Error running pipeline: {str(e)}")
+            st.session_state['pipeline_running'] = False
+            return False
 
 if __name__ == "__main__":
     dashboard = SalesAnalyticsDashboard()
