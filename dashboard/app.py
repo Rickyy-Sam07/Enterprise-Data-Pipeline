@@ -65,11 +65,11 @@ class SalesAnalyticsDashboard:
         col1, col2 = st.sidebar.columns(2)
         
         with col1:
-            if st.button("🚀 Generate Data", help="Generate new sample data"):
+            if st.button("Generate Data", help="Generate new sample data"):
                 self._run_data_generation()
         
         with col2:
-            if st.button("⚡ Run Pipeline", help="Execute full pipeline"):
+            if st.button("Run Pipeline", help="Execute full pipeline"):
                 self._run_full_pipeline()
         
         st.sidebar.markdown("---")
@@ -97,9 +97,9 @@ class SalesAnalyticsDashboard:
             if status:
                 latest_status = status[0]
                 if latest_status['event_type'] == 'PIPELINE_END':
-                    st.sidebar.success("✅ Pipeline Completed")
+                    st.sidebar.success("Pipeline Completed")
                 else:
-                    st.sidebar.info("🔄 Pipeline Running")
+                    st.sidebar.info("Pipeline Running")
     
     def _render_sales_analytics(self):
         if not st.session_state.get('selected_run'):
@@ -589,7 +589,7 @@ class SalesAnalyticsDashboard:
     
     def _render_dataset_preview(self):
         """Show sample dataset and pipeline execution controls"""
-        st.header("📈 Dataset Preview & Pipeline Controls")
+        st.header("Dataset Preview & Pipeline Controls")
         
         # Show sample data from the most recent run or raw data
         col1, col2 = st.columns([2, 1])
@@ -626,30 +626,30 @@ class SalesAnalyticsDashboard:
             
             # Pipeline execution status
             if st.session_state.get('pipeline_running'):
-                st.warning("🔄 Pipeline is running...")
+                st.warning("Pipeline is running...")
                 if st.button("Refresh Status"):
                     st.session_state['pipeline_running'] = False
-                    st.rerun()
+                    st.experimental_rerun()
             else:
                 # Generate new data
-                if st.button("🎲 Generate New Data", use_container_width=True):
+                if st.button("Generate New Data", use_container_width=True):
                     with st.spinner("Generating sample data..."):
                         success = self._run_data_generation()
                         if success:
                             st.success("Data generated successfully!")
-                            st.rerun()
+                            st.experimental_rerun()
                         else:
                             st.error("Failed to generate data")
                 
                 st.markdown("---")
                 
                 # Run full pipeline
-                if st.button("⚡ Execute Pipeline", use_container_width=True, type="primary"):
+                if st.button("Execute Pipeline", use_container_width=True, type="primary"):
                     with st.spinner("Running pipeline..."):
                         success = self._run_full_pipeline()
                         if success:
                             st.success("Pipeline completed successfully!")
-                            st.rerun()
+                            st.experimental_rerun()
                         else:
                             st.error("Pipeline execution failed")
                 
