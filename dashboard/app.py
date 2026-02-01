@@ -649,21 +649,13 @@ class SalesAnalyticsDashboard:
             else:
                 # Generate new data
                 if st.button("Generate New Data", use_container_width=True):
-                    with st.spinner("Generating sample data..."):
-                        success = self._run_data_generation()
-                        if success:
-                            # Remove the rerun to avoid errors
-                            pass
+                    self._run_data_generation()
                 
                 st.markdown("---")
                 
                 # Run full pipeline
                 if st.button("Execute Pipeline", use_container_width=True, type="primary"):
-                    with st.spinner("Running pipeline..."):
-                        success = self._run_full_pipeline()
-                        if success:
-                            # Remove the rerun to avoid errors
-                            pass
+                    self._run_full_pipeline()
                 
                 st.markdown("---")
                 
@@ -702,55 +694,127 @@ class SalesAnalyticsDashboard:
             return []
     
     def _run_data_generation(self):
-        """Execute data generation script"""
+        """Execute data generation script with progress tracking"""
         try:
             import subprocess
             import sys
             import os
+            import threading
+            import time
             
-            # Get the correct path for the script
-            script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'generate_data.py')
+            # Create progress placeholder
+            progress_placeholder = st.empty()
             
-            # Run the data generation script
-            result = subprocess.run([
-                sys.executable, script_path
-            ], capture_output=True, text=True)
+            def run_script():
+                script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'generate_data.py')
+                result = subprocess.run([
+                    sys.executable, script_path
+                ], capture_output=True, text=True)
+                return result
+            
+            # Show progress while running
+            progress_placeholder.info("🔄 Generating sample data...")
+            
+            # Run in thread to avoid blocking
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(run_script)
+                
+                # Show progress animation
+                progress_steps = ["Generating data.", "Generating data..", "Generating data..."]
+                step = 0
+                
+                while not future.done():
+                    progress_placeholder.info(progress_steps[step % 3])
+                    step += 1
+                    time.sleep(0.5)
+                
+                result = future.result()
+            
+            progress_placeholder.empty()
             
             if result.returncode == 0:
-                st.success(f"Data generation completed: {result.stdout}")
+                st.success("✅ Data generation completed successfully!")
                 return True
             else:
-                st.error(f"Data generation failed: {result.stderr}")
+                st.error(f"❌ Data generation failed: {result.stderr}")
                 return False
         except Exception as e:
             st.error(f"Error generating data: {str(e)}")
             return False
     
     def _run_full_pipeline(self):
-        """Execute the full pipeline"""
+        """Execute the full pipeline with progress tracking"""
         try:
             import subprocess
             import sys
             import os
+            import threading
+            import time
+            
+            # Create progress components
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            def run_pipeline():
+                script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'pipeline.py')
+                result = subprocess.run([
+                    sys.executable, script_path
+                ], capture_output=True, text=True)
+                return result
             
             # Set pipeline running state
             st.session_state['pipeline_running'] = True
             
-            # Get the correct path for the script
-            script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'pipeline.py')
+            # Pipeline stages for progress tracking
+            stages = [
+                "Initializing pipeline...",
+                "Creating database tables...",
+                "Ingesting raw data...",
+                "Running validations...",
+                "Processing exceptions...",
+                "Transforming data...",
+                "Generating analytics...",
+                "Finalizing pipeline..."
+            ]
             
-            # Run the pipeline script
-            result = subprocess.run([
-                sys.executable, script_path
-            ], capture_output=True, text=True)
+            # Run pipeline in thread
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(run_pipeline)
+                
+                # Simulate progress (since we can't track actual pipeline progress)
+                stage_idx = 0
+                progress = 0
+                
+                while not future.done():
+                    if stage_idx < len(stages):
+                        status_text.text(stages[stage_idx])
+                        progress = min(90, (stage_idx + 1) * 12)  # Max 90% until completion
+                        progress_bar.progress(progress)
+                        stage_idx += 1
+                    
+                    time.sleep(2)  # Update every 2 seconds
+                
+                result = future.result()
             
             st.session_state['pipeline_running'] = False
             
+            # Complete progress
+            progress_bar.progress(100)
+            status_text.text("Pipeline completed!")
+            
+            # Clear progress after 2 seconds
+            time.sleep(2)
+            progress_bar.empty()
+            status_text.empty()
+            
             if result.returncode == 0:
-                st.success(f"Pipeline completed: {result.stdout}")
+                st.success("✅ Pipeline executed successfully!")
+                st.balloons()  # Celebration animation
                 return True
             else:
-                st.error(f"Pipeline failed: {result.stderr}")
+                st.error(f"❌ Pipeline failed: {result.stderr}")
                 return False
         except Exception as e:
             st.error(f"Error running pipeline: {str(e)}")
