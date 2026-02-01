@@ -15,6 +15,10 @@ from sqlalchemy import text
 class SalesAnalyticsDashboard:
     def __init__(self):
         self.db = DatabaseManager()
+        # Check if we should use mock data
+        self.use_mock_data = not self.db.connection_available
+        if self.use_mock_data:
+            self.mock_data = self._generate_mock_data()
         
     def run_dashboard(self):
         st.set_page_config(
@@ -25,6 +29,10 @@ class SalesAnalyticsDashboard:
         
         st.title("Enterprise Sales Analytics Pipeline with Data Controls")
         st.markdown("**Enterprise-Grade Data Pipeline with Validation, Exception Management & Audit Logging**")
+        
+        # Show connection status
+        if self.use_mock_data:
+            st.warning("⚠️ Database connection unavailable. Showing demo data for preview purposes.")
         
         # Sidebar for pipeline controls and run selection
         self._render_sidebar()
@@ -483,6 +491,8 @@ class SalesAnalyticsDashboard:
     
     # Helper methods for data retrieval
     def _get_available_runs(self):
+        if self.use_mock_data:
+            return [{'run_id': 'demo_run_001', 'start_time': datetime.now()}]
         try:
             engine = self.db.get_engine()
             with engine.connect() as conn:
@@ -629,7 +639,6 @@ class SalesAnalyticsDashboard:
                 st.warning("Pipeline is running...")
                 if st.button("Refresh Status"):
                     st.session_state['pipeline_running'] = False
-                    st.experimental_rerun()
             else:
                 # Generate new data
                 if st.button("Generate New Data", use_container_width=True):
@@ -657,6 +666,8 @@ class SalesAnalyticsDashboard:
     
     def _get_sample_data(self):
         """Get sample data for preview"""
+        if self.use_mock_data:
+            return self.mock_data['sales_data'][:10]
         try:
             engine = self.db.get_engine()
             with engine.connect() as conn:
@@ -738,6 +749,46 @@ class SalesAnalyticsDashboard:
             st.error(f"Error running pipeline: {str(e)}")
             st.session_state['pipeline_running'] = False
             return False
+    
+    def _generate_mock_data(self):
+        """Generate mock data for demo purposes"""
+        from faker import Faker
+        import random
+        
+        fake = Faker()
+        regions = ['North', 'South', 'East', 'West', 'Central']
+        products = ['Sauces & Ketchup', 'Ready-to-Eat Meals', 'Dairy Products', 'Snacks', 'Beverages']
+        
+        # Generate sample sales data
+        sales_data = []
+        for i in range(100):
+            sales_data.append({
+                'order_id': f'ORD{1000+i}',
+                'order_date': fake.date_between(start_date='-30d', end_date='today'),
+                'region': random.choice(regions),
+                'product': random.choice(products),
+                'quantity': random.randint(1, 50),
+                'revenue': round(random.uniform(100, 5000), 2)
+            })
+        
+        return {
+            'sales_data': sales_data,
+            'analytics': {
+                'total_revenue': sum(s['revenue'] for s in sales_data),
+                'total_orders': len(sales_data),
+                'regions': len(regions),
+                'products': len(products)
+            },
+            'validation_results': [
+                {'control_type': 'Schema Validation', 'status': 'PASSED'},
+                {'control_type': 'Business Rules', 'status': 'PASSED'},
+                {'control_type': 'Data Quality', 'status': 'FAILED'},
+                {'control_type': 'Duplicate Check', 'status': 'PASSED'}
+            ],
+            'exceptions': [
+                {'error_category': 'DATA_QUALITY_ISSUE', 'pipeline_stage': 'VALIDATION', 'error_details': 'Missing date field'}
+            ]
+        }
 
 if __name__ == "__main__":
     dashboard = SalesAnalyticsDashboard()

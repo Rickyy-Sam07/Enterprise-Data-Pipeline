@@ -23,8 +23,21 @@ class DatabaseManager:
             self.user = os.getenv('DB_USER', 'postgres')
             self.password = os.getenv('DB_PASSWORD', '')
         
+        # Test connection availability
+        self.connection_available = self._test_connection()
+    
+    def _test_connection(self):
+        """Test if database connection is available"""
+        try:
+            engine = self.get_engine()
+            with engine.connect() as conn:
+                conn.execute(text('SELECT 1'))
+            return True
+        except:
+            return False
+        
     def get_engine(self):
-        connection_string = f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
+        connection_string = f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?sslmode=require"
         return create_engine(connection_string)
     
     def create_database(self):
