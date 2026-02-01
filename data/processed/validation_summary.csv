@@ -1,0 +1,2 @@
+run_id,total_checks,passed_checks,failed_checks,failure_percentage,failure_breakdown,timestamp
+85a2ab72,5231,4459,772,14.76,"{'MISSING_REGION': 83, 'NEGATIVE_REVENUE': 113, 'INVALID_QUANTITY': 51, 'MISSING_DATE': 217, 'INVALID_FORMAT': 142, 'DUPLICATE_ORDER_ID': 166}",2026-02-02T00:43:16.426247

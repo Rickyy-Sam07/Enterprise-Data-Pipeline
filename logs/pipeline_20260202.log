@@ -1,0 +1,58 @@
+2026-02-02 00:01:23,032 - INFO - Pipeline started - Run ID: cf2b2e6d
+2026-02-02 00:01:23,896 - ERROR - Exception occurred: Data ingestion failed: [Errno 2] No such file or directory: 'data/raw/sales_data.csv'
+2026-02-02 00:01:24,760 - ERROR - Exception occurred: [Errno 2] No such file or directory: 'data/raw/sales_data.csv'
+2026-02-02 00:04:11,932 - INFO - Pipeline started - Run ID: 412a2458
+2026-02-02 00:04:14,574 - INFO - Data ingested from c:\sambhranta\projects\Enterprise Data Pipeline\data\raw\sales_data.csv - 5000 records
+2026-02-02 00:06:46,182 - INFO - Pipeline started - Run ID: 99e58a36
+2026-02-02 00:06:48,772 - INFO - Data ingested from C:\sambhranta\projects\Enterprise Data Pipeline\data\raw\sales_data.csv - 5000 records
+2026-02-02 00:08:03,359 - INFO - Validation completed - Passed: 4376, Failed: 541
+2026-02-02 00:08:05,210 - ERROR - Exception occurred: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for type json
+LINE 4: ...region', '2026-02-02T00:08:04.268265'::timestamp, '{"order_i...
+                                                             ^
+DETAIL:  Token "NaN" is invalid.
+CONTEXT:  JSON data, line 1: ...ate": "2025-04-07 23:59:45.645053", "region": NaN...
+
+[SQL: 
+                    INSERT INTO exceptions 
+                    (run_id, original_record_id, error_category, pipeline_stage, error_details, timestamp, raw_data)
+                    VALUES (%(run_id)s, %(record_id)s, %(category)s, %(stage)s, %(details)s, %(timestamp)s, %(raw_data)s)
+                ]
+[parameters: {'run_id': '412a2458', 'record_id': 13, 'category': 'DATA_QUALITY_ISSUE', 'stage': 'VALIDATION', 'details': 'Missing region', 'timestamp': datetime.datetime(2026, 2, 2, 0, 8, 4, 268265), 'raw_data': '{"order_id": "ORD000014", "order_date": "2025-04-07 23:59:45.645053", "region": NaN, "product": "Cola 500ml", "quantity": 39, "revenue": 14490.45}'}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+2026-02-02 00:10:45,011 - INFO - Validation completed - Passed: 4376, Failed: 541
+2026-02-02 00:10:46,825 - ERROR - Exception occurred: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for type json
+LINE 4: ...region', '2026-02-02T00:10:45.952823'::timestamp, '{"order_i...
+                                                             ^
+DETAIL:  Token "NaN" is invalid.
+CONTEXT:  JSON data, line 1: ...ate": "2025-04-07 23:59:45.645053", "region": NaN...
+
+[SQL: 
+                    INSERT INTO exceptions 
+                    (run_id, original_record_id, error_category, pipeline_stage, error_details, timestamp, raw_data)
+                    VALUES (%(run_id)s, %(record_id)s, %(category)s, %(stage)s, %(details)s, %(timestamp)s, %(raw_data)s)
+                ]
+[parameters: {'run_id': '99e58a36', 'record_id': 13, 'category': 'DATA_QUALITY_ISSUE', 'stage': 'VALIDATION', 'details': 'Missing region', 'timestamp': datetime.datetime(2026, 2, 2, 0, 10, 45, 952823), 'raw_data': '{"order_id": "ORD000014", "order_date": "2025-04-07 23:59:45.645053", "region": NaN, "product": "Cola 500ml", "quantity": 39, "revenue": 14490.45}'}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+2026-02-02 00:11:55,761 - INFO - Pipeline started - Run ID: ec7d8414
+2026-02-02 00:11:59,523 - INFO - Data ingested from c:\sambhranta\projects\Enterprise Data Pipeline\data\raw\sales_data.csv - 5000 records
+2026-02-02 00:16:10,624 - INFO - Validation completed - Passed: 4376, Failed: 541
+2026-02-02 00:16:38,665 - ERROR - Exception occurred: Cannot save file into a non-existent directory: 'data\exceptions'
+2026-02-02 00:19:36,214 - INFO - Pipeline started - Run ID: 9b97209e
+2026-02-02 00:19:38,722 - INFO - Data ingested from c:\sambhranta\projects\Enterprise Data Pipeline\data\raw\sales_data.csv - 5000 records
+2026-02-02 00:24:04,564 - INFO - Validation completed - Passed: 4376, Failed: 541
+2026-02-02 00:24:31,612 - INFO - Exception records saved to c:\sambhranta\projects\Enterprise Data Pipeline\data\exceptions\exceptions_9b97209e_20260202_002431.csv
+2026-02-02 00:24:31,613 - INFO - Processed 541 exception records
+2026-02-02 00:24:33,431 - INFO - Saved 4376 clean records to database
+2026-02-02 00:24:34,632 - INFO - Generated 388 analytics summaries
+2026-02-02 00:24:34,632 - INFO - Data transformation completed - 4376 records processed
+2026-02-02 00:24:35,495 - INFO - Pipeline completed - Run ID: 9b97209e, Total records: 5000
+2026-02-02 00:38:58,332 - INFO - Pipeline started - Run ID: 85a2ab72
+2026-02-02 00:39:00,720 - INFO - Data ingested from c:\sambhranta\projects\Enterprise Data Pipeline\data\raw\sales_data.csv - 5000 records
+2026-02-02 00:42:39,717 - INFO - Validation completed - Passed: 4376, Failed: 541
+2026-02-02 00:43:11,684 - INFO - Exception records saved to c:\sambhranta\projects\Enterprise Data Pipeline\data\exceptions\exceptions_85a2ab72_20260202_004311.csv
+2026-02-02 00:43:11,685 - INFO - Processed 541 exception records
+2026-02-02 00:43:13,457 - INFO - Saved 4376 clean records to database
+2026-02-02 00:43:14,581 - INFO - Generated 388 analytics summaries
+2026-02-02 00:43:14,582 - INFO - Data transformation completed - 4376 records processed
+2026-02-02 00:43:16,423 - INFO - Generated 11 basic analytics summaries
+2026-02-02 00:43:16,429 - INFO - Pipeline completed - Run ID: 85a2ab72, Total records: 5000
