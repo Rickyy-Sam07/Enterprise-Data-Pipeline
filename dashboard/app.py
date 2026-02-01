@@ -636,10 +636,8 @@ class SalesAnalyticsDashboard:
                     with st.spinner("Generating sample data..."):
                         success = self._run_data_generation()
                         if success:
-                            st.success("Data generated successfully!")
-                            st.experimental_rerun()
-                        else:
-                            st.error("Failed to generate data")
+                            # Remove the rerun to avoid errors
+                            pass
                 
                 st.markdown("---")
                 
@@ -648,10 +646,8 @@ class SalesAnalyticsDashboard:
                     with st.spinner("Running pipeline..."):
                         success = self._run_full_pipeline()
                         if success:
-                            st.success("Pipeline completed successfully!")
-                            st.experimental_rerun()
-                        else:
-                            st.error("Pipeline execution failed")
+                            # Remove the rerun to avoid errors
+                            pass
                 
                 st.markdown("---")
                 
@@ -692,14 +688,22 @@ class SalesAnalyticsDashboard:
         try:
             import subprocess
             import sys
+            import os
+            
+            # Get the correct path for the script
+            script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'generate_data.py')
             
             # Run the data generation script
             result = subprocess.run([
-                sys.executable, 
-                os.path.join(os.path.dirname(__file__), '..', 'src', 'generate_data.py')
-            ], capture_output=True, text=True, cwd=os.path.dirname(__file__))
+                sys.executable, script_path
+            ], capture_output=True, text=True)
             
-            return result.returncode == 0
+            if result.returncode == 0:
+                st.success(f"Data generation completed: {result.stdout}")
+                return True
+            else:
+                st.error(f"Data generation failed: {result.stderr}")
+                return False
         except Exception as e:
             st.error(f"Error generating data: {str(e)}")
             return False
@@ -709,18 +713,27 @@ class SalesAnalyticsDashboard:
         try:
             import subprocess
             import sys
+            import os
             
             # Set pipeline running state
             st.session_state['pipeline_running'] = True
             
+            # Get the correct path for the script
+            script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'pipeline.py')
+            
             # Run the pipeline script
             result = subprocess.run([
-                sys.executable, 
-                os.path.join(os.path.dirname(__file__), '..', 'src', 'pipeline.py')
-            ], capture_output=True, text=True, cwd=os.path.dirname(__file__))
+                sys.executable, script_path
+            ], capture_output=True, text=True)
             
             st.session_state['pipeline_running'] = False
-            return result.returncode == 0
+            
+            if result.returncode == 0:
+                st.success(f"Pipeline completed: {result.stdout}")
+                return True
+            else:
+                st.error(f"Pipeline failed: {result.stderr}")
+                return False
         except Exception as e:
             st.error(f"Error running pipeline: {str(e)}")
             st.session_state['pipeline_running'] = False
