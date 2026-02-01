@@ -16,7 +16,7 @@ class SalesAnalyticsDashboard:
     def __init__(self):
         self.db = DatabaseManager()
         # Check if we should use mock data
-        self.use_mock_data = not self.db.connection_available
+        self.use_mock_data = not hasattr(self.db, 'connection_available') or not self.db.connection_available
         if self.use_mock_data:
             self.mock_data = self._generate_mock_data()
         
