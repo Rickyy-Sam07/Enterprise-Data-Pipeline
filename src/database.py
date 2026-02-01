@@ -3,16 +3,25 @@ import psycopg2
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 import logging
+import streamlit as st
 
 load_dotenv()
 
 class DatabaseManager:
     def __init__(self):
-        self.host = os.getenv('DB_HOST', 'localhost')
-        self.port = os.getenv('DB_PORT', '5432')
-        self.database = os.getenv('DB_NAME', 'postgres')  # Supabase uses 'postgres' as default
-        self.user = os.getenv('DB_USER', 'postgres')
-        self.password = os.getenv('DB_PASSWORD', '')
+        # Try Streamlit secrets first, then environment variables
+        if hasattr(st, 'secrets') and 'database' in st.secrets:
+            self.host = st.secrets.database.DB_HOST
+            self.port = st.secrets.database.DB_PORT
+            self.database = st.secrets.database.DB_NAME
+            self.user = st.secrets.database.DB_USER
+            self.password = st.secrets.database.DB_PASSWORD
+        else:
+            self.host = os.getenv('DB_HOST', 'localhost')
+            self.port = os.getenv('DB_PORT', '5432')
+            self.database = os.getenv('DB_NAME', 'postgres')
+            self.user = os.getenv('DB_USER', 'postgres')
+            self.password = os.getenv('DB_PASSWORD', '')
         
     def get_engine(self):
         connection_string = f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
