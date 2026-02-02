@@ -73,19 +73,19 @@ class SalesDataPipeline:
             }
     
     def _ingest_data(self, source_file):
-        """Controlled data ingestion with metadata"""
+        """Optimized data ingestion with bulk operations"""
         try:
             # Read raw data
             df = pd.read_csv(source_file)
             
-            # Add ingestion metadata
+            # Add ingestion metadata efficiently
             df['run_id'] = self.run_id
             df['ingestion_timestamp'] = datetime.now()
             df['source_name'] = source_file
             
-            # Store raw data in database
+            # Bulk insert to database
             engine = self.db.get_engine()
-            df.to_sql('raw_sales', engine, if_exists='append', index=False)
+            df.to_sql('raw_sales', engine, if_exists='append', index=False, method='multi')
             
             self.audit_logger.log_ingestion(len(df), source_file)
             
@@ -224,10 +224,10 @@ class SalesDataPipeline:
                     'created_timestamp': timestamp
                 })
         
-        # Bulk insert all summaries at once
+        # Bulk insert all summaries at once with optimized method
         if summaries:
             summary_df = pd.DataFrame(summaries)
-            summary_df.to_sql('analytics_summary', engine, if_exists='append', index=False)
+            summary_df.to_sql('analytics_summary', engine, if_exists='append', index=False, method='multi')
             self.audit_logger.logger.info(f"Generated {len(summaries)} analytics summaries")
 
 if __name__ == "__main__":

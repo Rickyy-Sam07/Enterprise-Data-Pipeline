@@ -20,7 +20,7 @@ def generate_sales_data():
     data = []
     start_date = datetime.now() - timedelta(days=365)
     
-    for i in range(5000):
+    for i in range(4000):  # Reduced from 5000 to 4000
         order_date = start_date + timedelta(days=random.randint(0, 365))
         
         # Intentional data quality issues

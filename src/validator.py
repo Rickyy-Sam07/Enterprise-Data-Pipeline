@@ -125,27 +125,30 @@ class DataValidator:
         })
     
     def save_validation_results(self):
-        """Save all validation results to database"""
+        """Save all validation results to database with bulk insert"""
         if not self.validation_results:
             return
         
-        engine = self.db.get_engine()
-        with engine.connect() as conn:
-            for result in self.validation_results:
-                conn.execute(text("""
-                    INSERT INTO validation_results 
-                    (run_id, record_id, validation_stage, control_type, status, failure_reason, timestamp)
-                    VALUES (:run_id, :record_id, :stage, :control_type, :status, :reason, :timestamp)
-                """), {
-                    'run_id': self.run_id,
-                    'record_id': result['record_id'],
-                    'stage': result['stage'],
-                    'control_type': result['control_type'],
-                    'status': result['status'],
-                    'reason': result['reason'],
-                    'timestamp': datetime.now()
-                })
-            conn.commit()
+        # Prepare data for bulk insert
+        validation_data = []
+        timestamp = datetime.now()
+        
+        for result in self.validation_results:
+            validation_data.append({
+                'run_id': self.run_id,
+                'record_id': result['record_id'],
+                'validation_stage': result['stage'],
+                'control_type': result['control_type'],
+                'status': result['status'],
+                'failure_reason': result['reason'],
+                'timestamp': timestamp
+            })
+        
+        # Bulk insert
+        if validation_data:
+            df_validation = pd.DataFrame(validation_data)
+            engine = self.db.get_engine()
+            df_validation.to_sql('validation_results', engine, if_exists='append', index=False, method='multi')
     
     def generate_validation_summary(self):
         """Generate validation summary metrics"""
