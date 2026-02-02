@@ -19,7 +19,14 @@ class SalesAnalyticsDashboard:
         try:
             self.use_mock_data = not self.db.connection_available
         except AttributeError:
-            self.use_mock_data = True
+            # Test actual connection
+            try:
+                engine = self.db.get_engine()
+                with engine.connect() as conn:
+                    conn.execute(text('SELECT 1'))
+                self.use_mock_data = False
+            except:
+                self.use_mock_data = True
         
         if self.use_mock_data:
             self.mock_data = self._generate_mock_data()
