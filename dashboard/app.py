@@ -71,21 +71,6 @@ class SalesAnalyticsDashboard:
     def _render_sidebar(self):
         st.sidebar.header("Pipeline Controls")
         
-        # Pipeline execution controls
-        st.sidebar.subheader("Run Pipeline")
-        
-        col1, col2 = st.sidebar.columns(2)
-        
-        with col1:
-            if st.button("Generate Data", help="Generate new sample data"):
-                self._run_data_generation()
-        
-        with col2:
-            if st.button("Run Pipeline", help="Execute full pipeline"):
-                self._run_full_pipeline()
-        
-        st.sidebar.markdown("---")
-        
         # Run selection
         st.sidebar.subheader("Select Pipeline Run")
         
