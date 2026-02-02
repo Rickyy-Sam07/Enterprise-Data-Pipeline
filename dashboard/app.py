@@ -612,21 +612,6 @@ class SalesAnalyticsDashboard:
                 for col in df_sample.select_dtypes(include=['object']).columns:
                     df_sample[col] = df_sample[col].astype(str)
                 st.dataframe(df_sample.head(10), use_container_width=True)
-                
-                # Data statistics
-                st.subheader("Dataset Statistics")
-                stats_col1, stats_col2, stats_col3 = st.columns(3)
-                
-                with stats_col1:
-                    st.metric("Total Records", len(df_sample))
-                
-                with stats_col2:
-                    if 'region' in df_sample.columns:
-                        st.metric("Regions", df_sample['region'].nunique())
-                
-                with stats_col3:
-                    if 'product' in df_sample.columns:
-                        st.metric("Products", df_sample['product'].nunique())
             else:
                 st.info("No data available. Please generate sample data first.")
         
